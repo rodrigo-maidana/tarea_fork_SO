@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/wait.h>
+#include <wait.h>
 #include <string.h>
-#include <sys/time.h>
+#include <time.h>
 
-#define ARRAY_SIZE 1000
+#define ARRAY_SIZE 1000 // Tamaño del arreglo
+#define DATO_A_BUSCAR 500  // Dato a buscar codificado en el programa
+#define N_CHILDREN 8     // Número de procesos hijos
 
 void shuffle_array(int array[], int size) {
     for (int i = size - 1; i > 0; i--) {
@@ -27,41 +29,45 @@ void generate_random_array(int array[], int size) {
     shuffle_array(array, size);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
+    srand(time(NULL)); // Para la generación de números aleatorios
+
+    clock_t start_time = clock(); // Tiempo inicial
+    double start = ((double) (start_time)) / CLOCKS_PER_SEC;
+    printf("%.6f", start);
+
     int array[ARRAY_SIZE];
-    int n_children = 4; // Ejemplo con 4 hijos
-    int segment_size = ARRAY_SIZE / n_children;
+    int segment_size = ARRAY_SIZE / N_CHILDREN;
     pid_t pid;
-    char filename[50];
 
     generate_random_array(array, ARRAY_SIZE);
 
-    for (int i = 0; i < n_children; i++) {
+    for (int i = 0; i < N_CHILDREN; i++) {
         pid = fork();
-        if (pid == 0) {
-            // Código del hijo
-            snprintf(filename, sizeof(filename), "child_%d.txt", i);
-            FILE *fp = fopen(filename, "w");
-            if (!fp) exit(1); // Si no se puede abrir el archivo, termina el hijo
-
-            // Escribe el dato a buscar y el sub-arreglo en el archivo
-            fprintf(fp, "%d\n", 123); // Hardcodeado, ejemplo buscando el número 123
-            for (int j = i * segment_size; j < (i + 1) * segment_size; j++) {
-                fprintf(fp, "%d ", array[j]);
+        if (pid == 0) { // Proceso hijo
+            // Cada hijo trabajará con su segmento del arreglo aquí
+            int found = 0;
+            for (int j = i * segment_size; j < (i + 1) * segment_size && !found; j++) {
+                if (array[j] == DATO_A_BUSCAR) {
+                    clock_t end_time = clock(); // Tiempo final
+                    double cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+                    printf("Hijo %d encontró el dato %d en el índice %d. Tiempo transcurrido: %.6f segundos.\n", i, DATO_A_BUSCAR, j, cpu_time_used);
+                    found = 1;
+                }
             }
-            fclose(fp);
-
-            // Ejecuta el programa de búsqueda con el nombre del archivo como argumento
-            char *args[] = {"./search_program", filename, NULL};
-            execv("./search_program", args);
-            exit(0); // Terminar este proceso hijo específico
+            if (!found) {
+                printf("Hijo %d no encontró el dato %d.\n", i, DATO_A_BUSCAR);
+            }
+            exit(0); // Finaliza el proceso hijo
         }
     }
 
-    // Espera a todos los hijos
+    // Espera a que todos los hijos terminen
     while (wait(NULL) > 0);
 
-    // Procesamiento de resultados, etc.
+
+    clock_t end_time = clock(); // Tiempo final
+    double cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
 
     return 0;
 }
