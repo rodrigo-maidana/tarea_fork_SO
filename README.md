@@ -1,4 +1,9 @@
-No logré sobreescribir el codigo con EXEC.
+**TAREA FORK() SISTEMAS OPERATIVOS - Rodrigo Maidana**
+
+No pude sobrescribir el código utilizando EXEC. Para hacer más evidente el tiempo de ejecución, mantuve el arreglo de 2,000,000 elementos y diseñé las pruebas para buscar siempre el número 1,999,999. Esto asegura que el número de iteraciones corresponda directamente al número de elementos en el arreglo. De esta manera, evito que la aleatoriedad en la posición de los números influya en los resultados.
+
+Además, no logré medir el tiempo de los cambios de contexto; solo pude registrar el tiempo que cada proceso hijo tarda individualmente en encontrar su número asignado.
+
 Estos fueron los resultados que obtuve:
 
 Se ejecuta el proyecto con ./Proyecto [Numero de Hijos]
